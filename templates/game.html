@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEAR - Play</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+            color: #fff;
+            padding: 20px;
+        }
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00ffff;
+        }
+        h1 { color: #00ffff; text-shadow: 0 0 10px #00ffff; }
+        .stats { display: flex; gap: 30px; }
+        .stat { text-align: center; }
+        .stat-label { color: #888; font-size: 0.9em; }
+        .stat-value { color: #00ffff; font-size: 1.5em; font-weight: bold; }
+        .logout-btn {
+            background: #ff0000;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .logout-btn:hover { background: #cc0000; }
+        
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .card {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #00ffff;
+        }
+        .card h2 {
+            color: #00ffff;
+            margin-bottom: 15px;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .card p { margin-bottom: 10px; }
+        
+        .race-area {
+            grid-column: 1 / -1;
+        }
+        .track-select {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .track-btn {
+            padding: 15px;
+            background: linear-gradient(135deg, #00ffff, #0099ff);
+            border: none;
+            border-radius: 5px;
+            color: #000;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .track-btn:hover { transform: scale(1.05); }
+        
+        #gameCanvas {
+            width: 100%;
+            height: 400px;
+            background: #000;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            display: none;
+        }
+        
+        .shop-item {
+            background: rgba(255, 0, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #ff00ff;
+        }
+        .skin-color {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        .shop-btn {
+            padding: 8px 15px;
+            background: #00ffff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .shop-btn:hover { background: #00cccc; }
+        .shop-btn:disabled {
+            background: #666;
+            cursor: not-allowed;
+            color: #999;
+        }
+        
+        .garage-item {
+            background: rgba(0, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #00ffff;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .garage-item:hover { background: rgba(0, 255, 255, 0.2); }
+        .garage-item.active {
+            background: rgba(0, 255, 255, 0.3);
+            border-color: #ff00ff;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+        .button-group button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .play-btn {
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: #fff;
+        }
+        .play-btn:hover { transform: scale(1.05); }
+        .reset-btn {
+            background: #ffaa00;
+            color: #000;
+        }
+        .reset-btn:hover { background: #ff9900; }
+        
+        .game-over {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 40px;
+            border-radius: 10px;
+            border: 3px solid #ff00ff;
+            text-align: center;
+            z-index: 1000;
+            min-width: 300px;
+        }
+        .game-over h2 { color: #ff00ff; margin-bottom: 20px; font-size: 2em; }
+        .game-over p { margin-bottom: 10px; font-size: 1.2em; }
+        .game-over button {
+            padding: 10px 30px;
+            margin-top: 20px;
+            background: #00ffff;
+            color: #000;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🏁 GEAR</h1>
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-label">COINS</div>
+                <div class="stat-value" id="coins">{{ coins }}</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">HIGH SCORE</div>
+                <div class="stat-value" id="highScore">{{ high_score }}m</div>
+            </div>
+            <div class="stat">
+                <div class="stat-label">NITRO</div>
+                <div class="stat-value" id="nitro">{{ nitro }}⚡</div>
+            </div>
+        </div>
+        <div>
+            <span id="username" style="margin-right: 20px;">{{ username }}</span>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="card race-area">
+            <h2>🏁 RACE</h2>
+            <div class="track-select">
+                <button class="track-btn" onclick="startRace('NEON CITY')">🌆 Neon City</button>
+                <button class="track-btn" onclick="startRace('DESERT')">🏜️ Desert</button>
+                <button class="track-btn" onclick="startRace('CYBER FOREST')">🌳 Cyber Forest</button>
+                <button class="track-btn" onclick="startRace('VOID')">🌌 Void</button>
+            </div>
+            <canvas id="gameCanvas"></canvas>
+            <div id="gameInstructions" style="text-align: center; padding: 20px;">
+                <p>⬅️ ➡️ Use arrow keys or A/D to move</p>
+                <p>N = Use Nitro | Click a track to start!</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <h2>🛒 SHOP</h2>
+            <div id="shop"></div>
+        </div>
+        
+        <div class="card">
+            <h2>🚗 GARAGE</h2>
+            <div id="garage"></div>
+        </div>
+        
+        <div class="card">
+            <h2>📊 STATS</h2>
+            <p>Total Distance: <span id="totalDistance">0</span>m</p>
+            <p>Skins Owned: <span id="skinsOwned">0</span>/13</p>
+            <button class="reset-btn" style="width: 100%; margin-top: 15px;" onclick="resetNitro()">🔄 Reset Nitro (100 coins)</button>
+        </div>
+    </div>
+    
+    <div class="game-over" id="gameOverModal">
+        <h2>🏁 RUN ENDED</h2>
+        <p>Distance: <span id="finalDistance">0</span>m</p>
+        <p>Coins Earned: <span id="coinsEarned">0</span> 🪙</p>
+        <p id="newHighScore" style="color: #ffff00; display: none;">🏆 NEW HIGH SCORE! 🏆</p>
+        <button onclick="closeGameOver()">Continue</button>
+    </div>
+    
+    <script>
+        const SKIN_PRICES = {
+            "PIXEL": 280, "MUSIC": 350, "RDX": 420, "SMOKE": 380,
+            "BLOOD": 520, "SHADOW": 650, "RACER": 480, "SYMBIOTE": 720,
+            "DESPA": 680, "JUPITER": 850, "RED MONSTER": 1200, "TAZ": 1100
+        };
+        
+        const SKIN_COLORS = {
+            "Basic": "#FFFFFF", "PIXEL": "#00FFFF", "MUSIC": "#FF00FF", "RDX": "#FF0000",
+            "SMOKE": "#808080", "BLOOD": "#8B0000", "SHADOW": "#0000FF", "RACER": "#FFFF00",
+            "SYMBIOTE": "#00FF00", "DESPA": "#800080", "JUPITER": "#00FFFF",
+            "RED MONSTER": "#FF0000", "TAZ": "#FFD700"
+        };
+        
+        let gameState = {
+            coins: {{ coins }},
+            highScore: {{ high_score }},
+            nitro: {{ nitro }},
+            unlockedSkins: {{ unlocked_skins|tojson }},
+            currentSkin: '{{ current_skin }}'
+        };
+        
+        let gameRunning = false;
+        let gameData = {
+            lane: 1,
+            distance: 0,
+            coins: 0,
+            nitroActive: false,
+            nitroTimer: 0,
+            track: ''
+        };
+        
+        function updateUI() {
+            document.getElementById('coins').textContent = gameState.coins;
+            document.getElementById('highScore').textContent = gameState.highScore + 'm';
+            document.getElementById('nitro').textContent = gameState.nitro + '⚡';
+            renderShop();
+            renderGarage();
+            document.getElementById('skinsOwned').textContent = gameState.unlockedSkins.length;
+        }
+        
+        function renderShop() {
+            const shop = document.getElementById('shop');
+            shop.innerHTML = '';
+            for (let [skin, price] of Object.entries(SKIN_PRICES)) {
+                const owned = gameState.unlockedSkins.includes(skin);
+                shop.innerHTML += `
+                    <div class="shop-item">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div class="skin-color" style="background: ${SKIN_COLORS[skin]}"></div>
+                            <div>${skin}</div>
+                        </div>
+                        <button class="shop-btn" ${owned ? 'disabled' : ''} onclick="buySkin('${skin}')">
+                            ${owned ? '✓ OWNED' : price + ' 🪙'}
+                        </button>
+                    </div>
+                `;
+            }
+        }
+        
+        function renderGarage() {
+            const garage = document.getElementById('garage');
+            garage.innerHTML = '';
+            gameState.unlockedSkins.forEach(skin => {
+                const active = skin === gameState.currentSkin;
+                garage.innerHTML += `
+                    <div class="garage-item ${active ? 'active' : ''}" onclick="equipSkin('${skin}')">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            ${active ? '✓' : '•'} 
+                            <div class="skin-color" style="background: ${SKIN_COLORS[skin]}"></div>
+                            <div>${skin}</div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+        
+        async function buySkin(skin) {
+            if (gameState.coins < SKIN_PRICES[skin]) {
+                alert('Not enough coins!');
+                return;
+            }
+            try {
+                const res = await fetch('/api/buy-skin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({skin})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    gameState.coins = data.coins;
+                    gameState.unlockedSkins.push(skin);
+                    updateUI();
+                }
+            } catch (e) {
+                alert('Error buying skin');
+            }
+        }
+        
+        async function equipSkin(skin) {
+            try {
+                const res = await fetch('/api/equip-skin', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({skin})
+                });
+                const data = await res.json();
+                if (data.success) {
+                    gameState.currentSkin = skin;
+                    updateUI();
+                }
+            } catch (e) {
+                alert('Error equipping skin');
+            }
+        }
+        
+        async function resetNitro() {
+            if (gameState.coins < 100) {
+                alert('Not enough coins!');
+                return;
+            }
+            try {
+                const res = await fetch('/api/reset-nitro', {method: 'POST'});
+                const data = await res.json();
+                if (data.success) {
+                    gameState.coins = data.coins;
+                    gameState.nitro = 3;
+                    updateUI();
+                }
+            } catch (e) {
+                alert('Error resetting nitro');
+            }
+        }
+        
+        function startRace(track) {
+            gameData.track = track;
+            gameData.distance = 0;
+            gameData.coins = 0;
+            gameData.lane = 1;
+            gameData.nitroActive = false;
+            gameRunning = true;
+            
+            const canvas = document.getElementById('gameCanvas');
+            const instructions = document.getElementById('gameInstructions');
+            canvas.style.display = 'block';
+            instructions.style.display = 'none';
+            
+            playGame(canvas);
+        }
+        
+        function playGame(canvas) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            let animationId;
+            let obstacles = [];
+            const laneWidth = canvas.width / 3;
+            
+            document.addEventListener('keydown', (e) => {
+                if (!gameRunning) return;
+                if (e.key === 'ArrowLeft' || e.key === 'a') gameData.lane = Math.max(0, gameData.lane - 1);
+                if (e.key === 'ArrowRight' || e.key === 'd') gameData.lane = Math.min(2, gameData.lane + 1);
+                if (e.key === 'n' && gameState.nitro > 0 && !gameData.nitroActive) {
+                    gameData.nitroActive = true;
+                    gameData.nitroTimer = 100;
+                    gameState.nitro--;
+                }
+            });
+            
+            const gameLoop = () => {
+                ctx.fillStyle = '#000';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                
+                // Draw road lanes
+                ctx.strokeStyle = '#00ffff';
+                ctx.lineWidth = 2;
+                for (let i = 1; i < 3; i++) {
+                    ctx.setLineDash([10, 10]);
+                    ctx.beginPath();
+                    ctx.moveTo(i * laneWidth, 0);
+                    ctx.lineTo(i * laneWidth, canvas.height);
+                    ctx.stroke();
+                }
+                ctx.setLineDash([]);
+                
+                // Draw car
+                ctx.fillStyle = SKIN_COLORS[gameState.currentSkin];
+                ctx.fillRect(gameData.lane * laneWidth + 20, canvas.height - 80, laneWidth - 40, 60);
+                
+                // Draw obstacles
+                if (Math.random() < 0.02) {
+                    obstacles.push({lane: Math.floor(Math.random() * 3), y: 0, type: Math.random() < 0.5 ? 'obstacle' : 'coin'});
+                }
+                
+                obstacles = obstacles.filter(obs => obs.y < canvas.height);
+                
+                obstacles.forEach((obs, idx) => {
+                    obs.y += gameData.nitroActive ? 5 : 3;
+                    
+                    if (obs.type === 'obstacle') {
+                        ctx.fillStyle = '#ff0000';
+                        ctx.fillRect(obs.lane * laneWidth + 30, obs.y, laneWidth - 60, 30);
+                        
+                        if (obs.lane === gameData.lane && obs.y > canvas.height - 100) {
+                            endRace();
+                            return;
+                        }
+                    } else {
+                        ctx.fillStyle = '#ffff00';
+                        ctx.beginPath();
+                        ctx.arc(obs.lane * laneWidth + laneWidth/2, obs.y + 15, 10, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        if (obs.lane === gameData.lane && obs.y > canvas.height - 100) {
+                            gameData.coins += gameData.nitroActive ? 35 : 25;
+                            obstacles.splice(idx, 1);
+                        }
+                    }
+                });
+                
+                // Update stats
+                gameData.distance += gameData.nitroActive ? 2 : 1;
+                if (gameData.nitroActive) gameData.nitroTimer--;
+                if (gameData.nitroTimer <= 0) gameData.nitroActive = false;
+                
+                // Draw UI
+                ctx.fillStyle = '#00ffff';
+                ctx.font = 'bold 18px Arial';
+                ctx.fillText(`Track: ${gameData.track}`, 20, 30);
+                ctx.fillText(`Distance: ${gameData.distance}m`, 20, 60);
+                ctx.fillText(`Coins: ${gameData.coins}`, 20, 90);
+                ctx.fillText(gameData.nitroActive ? '⚡ NITRO!' : `Nitro: ${gameState.nitro}`, canvas.width - 200, 30);
+                
+                if (gameRunning) animationId = requestAnimationFrame(gameLoop);
+            };
+            
+            function endRace() {
+                gameRunning = false;
+                cancelAnimationFrame(animationId);
+                showGameOver();
+            }
+            
+            gameLoop();
+        }
+        
+        async function showGameOver() {
+            const isNewHighScore = gameData.distance > gameState.highScore;
+            if (isNewHighScore) gameState.highScore = gameData.distance;
+            
+            gameState.coins += gameData.coins;
+            
+            try {
+                await fetch('/api/save-race', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({distance: gameData.distance, coins_earned: gameData.coins})
+                });
+            } catch (e) {}
+            
+            document.getElementById('finalDistance').textContent = gameData.distance;
+            document.getElementById('coinsEarned').textContent = gameData.coins;
+            document.getElementById('newHighScore').style.display = isNewHighScore ? 'block' : 'none';
+            document.getElementById('gameOverModal').style.display = 'block';
+            updateUI();
+        }
+        
+        function closeGameOver() {
+            document.getElementById('gameOverModal').style.display = 'none';
+            document.getElementById('gameCanvas').style.display = 'none';
+            document.getElementById('gameInstructions').style.display = 'block';
+        }
+        
+        async function logout() {
+            await fetch('/api/logout', {method: 'POST'});
+            window.location.href = '/';
+        }
+        
+        updateUI();
+    </script>
+</body>
+</html>

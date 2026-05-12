@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEAR - Neon Runner</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a0033 0%, #330066 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+        }
+        .container {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 0 40px rgba(0, 255, 255, 0.5);
+            width: 100%;
+            max-width: 400px;
+            border: 2px solid #00ffff;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #00ffff;
+            font-size: 2.5em;
+            text-shadow: 0 0 10px #00ffff;
+        }
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: #00ffff;
+            color: #000;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+        .tab-btn.active {
+            background: #ff00ff;
+            box-shadow: 0 0 20px #ff00ff;
+        }
+        .tab-btn:hover {
+            transform: scale(1.05);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #00ffff;
+            border-radius: 5px;
+            background: rgba(0, 255, 255, 0.1);
+            color: #fff;
+            font-size: 1em;
+        }
+        input:focus {
+            outline: none;
+            border-color: #ff00ff;
+            box-shadow: 0 0 10px #ff00ff;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: linear-gradient(135deg, #00ffff, #ff00ff);
+            color: #fff;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: 0.3s;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(255, 0, 255, 0.8);
+        }
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 5px;
+            text-align: center;
+            display: none;
+        }
+        .message.success {
+            background: #00ff00;
+            color: #000;
+        }
+        .message.error {
+            background: #ff0000;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏁 GEAR</h1>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+            <button class="tab-btn" onclick="switchTab('register')">Register</button>
+        </div>
+        
+        <div id="login" class="tab-content active">
+            <div id="login-message" class="message"></div>
+            <input type="text" id="login-username" placeholder="Username" />
+            <input type="password" id="login-password" placeholder="Password" />
+            <button onclick="login()">Login</button>
+        </div>
+        
+        <div id="register" class="tab-content">
+            <div id="register-message" class="message"></div>
+            <input type="text" id="register-username" placeholder="Username" />
+            <input type="password" id="register-password" placeholder="Password" />
+            <button onclick="register()">Register</button>
+        </div>
+    </div>
+    
+    <script>
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+        
+        async function login() {
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            const msg = document.getElementById('login-message');
+            
+            if (!username || !password) {
+                showMessage(msg, 'Please fill all fields!', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    window.location.href = '/';
+                } else {
+                    showMessage(msg, data.message, 'error');
+                }
+            } catch (e) {
+                showMessage(msg, 'Connection error!', 'error');
+            }
+        }
+        
+        async function register() {
+            const username = document.getElementById('register-username').value;
+            const password = document.getElementById('register-password').value;
+            const msg = document.getElementById('register-message');
+            
+            if (!username || !password) {
+                showMessage(msg, 'Please fill all fields!', 'error');
+                return;
+            }
+            
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({username, password})
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    showMessage(msg, 'Account created! Redirecting...', 'success');
+                    setTimeout(() => window.location.href = '/', 1500);
+                } else {
+                    showMessage(msg, data.message, 'error');
+                }
+            } catch (e) {
+                showMessage(msg, 'Connection error!', 'error');
+            }
+        }
+        
+        function showMessage(el, text, type) {
+            el.textContent = text;
+            el.className = `message ${type}`;
+            el.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
